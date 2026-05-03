@@ -1,10 +1,16 @@
 import express from "express";
 import axios from "axios";
 import dotenv from "dotenv";
+import cors from "cors";
 
 dotenv.config();
 
 const app = express();
+
+app.use(cors({
+  origin: "https://sound-wave-frontend-eight.vercel.app"
+}));
+
 app.use(express.json());
 
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
