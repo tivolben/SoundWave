@@ -22,10 +22,18 @@ app.get("/", (req, res) => {
 
 app.post("/send", async (req, res) => {
   try {
-    const { name, phone, wishes } = req.body;
+    console.log("BODY:", req.body);
+    console.log("TOKEN exists:", !!TELEGRAM_TOKEN);
+    console.log("CHAT exists:", !!CHAT_ID);
+
+    const { name, phone, wishes } = req.body || {};
 
     if (!name || !phone) {
       return res.status(400).json({ error: "Missing fields" });
+    }
+
+    if (!TELEGRAM_TOKEN || !CHAT_ID) {
+      return res.status(500).json({ error: "Env variables missing" });
     }
 
     const text = `
@@ -35,7 +43,7 @@ app.post("/send", async (req, res) => {
 Сообщение: ${wishes || "Отсутствует"}
     `;
 
-    await axios.post(
+    const tgResponse = await axios.post(
       `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`,
       {
         chat_id: CHAT_ID,
@@ -43,10 +51,16 @@ app.post("/send", async (req, res) => {
       }
     );
 
+    console.log("Telegram response:", tgResponse.data);
+
     res.json({ success: true });
   } catch (err) {
-    console.log(err.message);
-    res.status(500).json({ error: "Server error" });
+    console.log("ERROR RESPONSE:", err?.response?.data || err.message);
+
+    res.status(500).json({
+      error: "Server error",
+      details: err?.response?.data || err.message
+    });
   }
 });
 
