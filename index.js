@@ -1,12 +1,14 @@
-const express = require("express");
-const cors = require("cors");
-const axios = require("axios");
-require("dotenv").config();
+import express from "express";
+import axios from "axios";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const app = express();
-
-app.use(cors());
 app.use(express.json());
+
+const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
+const CHAT_ID = process.env.CHAT_ID;
 
 app.get("/", (req, res) => {
   res.send("Server is running");
@@ -17,43 +19,33 @@ app.post("/send", async (req, res) => {
     const { name, phone, wishes } = req.body;
 
     if (!name || !phone) {
-      return res.status(400).json({
-        success: false,
-        message: "Name and phone are required",
-      });
+      return res.status(400).json({ error: "Missing fields" });
     }
 
     const text = `
-📩 Новая заявка:
-👤 Имя: ${name}
-📞 Телефон: ${phone}
-💬 Сообщение: ${wishes || "нет"}
+Новая заявка:
+Имя: ${name}
+Телефон: ${phone}
+Сообщение: ${wishes || "Отсутствует"}
     `;
 
     await axios.post(
-      `https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage`,
+      `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`,
       {
-        chat_id: process.env.CHAT_ID,
+        chat_id: CHAT_ID,
         text,
-      },
-      {
-        timeout: 10000,
       }
     );
 
     res.json({ success: true });
-  } catch (error) {
-    console.log("ERROR:", error.message);
-
-    res.status(500).json({
-      success: false,
-      message: "Telegram request failed",
-    });
+  } catch (err) {
+    console.log(err.message);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server started on port ${PORT}`);
 });
