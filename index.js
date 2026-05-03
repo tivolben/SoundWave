@@ -22,19 +22,9 @@ app.get("/", (req, res) => {
 
 app.post("/send", async (req, res) => {
   try {
-    console.log("BODY:", req.body);
-    console.log("TOKEN exists:", !!TELEGRAM_TOKEN);
-    console.log("CHAT exists:", !!CHAT_ID);
-
     const { name, phone, wishes } = req.body || {};
 
-    if (!name || !phone) {
-      return res.status(400).json({ error: "Missing fields" });
-    }
-
-    if (!TELEGRAM_TOKEN || !CHAT_ID) {
-      return res.status(500).json({ error: "Env variables missing" });
-    }
+    console.log("BODY:", req.body);
 
     const text = `
 Новая заявка:
@@ -43,22 +33,23 @@ app.post("/send", async (req, res) => {
 Сообщение: ${wishes || "Отсутствует"}
     `;
 
-    const tgResponse = await axios.post(
-      `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`,
-      {
-        chat_id: CHAT_ID,
-        text,
-      }
-    );
+    const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
 
-    console.log("Telegram response:", tgResponse.data);
+    const tg = await axios.post(url, {
+      chat_id: CHAT_ID,
+      text,
+    });
+
+    console.log("TG OK:", tg.data);
 
     res.json({ success: true });
+
   } catch (err) {
-    console.log("ERROR RESPONSE:", err?.response?.data || err.message);
+    console.log("❌ TELEGRAM ERROR:");
+    console.log(err?.response?.data || err.message);
 
     res.status(500).json({
-      error: "Server error",
+      error: "Telegram failed",
       details: err?.response?.data || err.message
     });
   }
